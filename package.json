@@ -1,0 +1,50 @@
+{
+  "name": "elysiajs-helmet",
+  "description":"A comprehensive security middleware for Elysia.js applications that helps secure your apps by setting various HTTP headers.",
+  "keywords": [
+    "elysia",
+    "elysia-plugin",
+    "bun",
+    "helmet",
+    "security",
+    "headers",
+    "cors",
+    "csp",
+    "xss",
+    "xss-protection",
+    "dns-prefetch",
+    "referrer-policy",
+    "permissions-policy",
+    "hsts",
+    "cross-origin-resource-policy",
+    "cross-origin-opener-policy"
+  ],
+  "version": "1.0.1",
+  "author": "Abdelrahman Shaheen",
+  "repository": "https://github.com/aashahin/elysia-xss",
+  "license": "MIT",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "dev": "bun --watch src/index.ts",
+    "build": "tsc",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "elysia": "^1.1.5"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.4",
+    "@types/bun": "^1.1.6"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  }
+}
