@@ -1,6 +1,6 @@
 {
   "name": "elysiajs-helmet",
-  "description":"A comprehensive security middleware for Elysia.js applications that helps secure your apps by setting various HTTP headers.",
+  "description": "A comprehensive security middleware for Elysia.js applications that helps secure your apps by setting various HTTP headers.",
   "keywords": [
     "elysia",
     "elysia-plugin",
@@ -19,9 +19,9 @@
     "cross-origin-resource-policy",
     "cross-origin-opener-policy"
   ],
-  "version": "1.0.1",
+  "version": "1.0.3",
   "author": "Abdelrahman Shaheen",
-  "repository": "https://github.com/aashahin/elysia-xss",
+  "repository": "https://github.com/aashahin/elysiajs-helmet",
   "license": "MIT",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
