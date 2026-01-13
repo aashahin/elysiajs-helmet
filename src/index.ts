@@ -49,7 +49,7 @@ export interface CSPConfig {
 }
 
 /**
- * Configuration inerface for HTTP Strict Transport Security
+ * Configuration interface for HTTP Strict Transport Security
  */
 export interface HSTSConfig {
   /** Maximum age */
@@ -74,14 +74,14 @@ export interface SecurityConfig {
   dnsPrefetch?: boolean;
   /** Configure Referrer Policy */
   referrerPolicy?:
-    | "no-referrer"
-    | "no-referrer-when-downgrade"
-    | "origin"
-    | "origin-when-cross-origin"
-    | "same-origin"
-    | "strict-origin"
-    | "strict-origin-when-cross-origin"
-    | "unsafe-url";
+  | "no-referrer"
+  | "no-referrer-when-downgrade"
+  | "origin"
+  | "origin-when-cross-origin"
+  | "same-origin"
+  | "strict-origin"
+  | "strict-origin-when-cross-origin"
+  | "unsafe-url";
   /** Configure Permissions Policy */
   permissionsPolicy?: Record<string, string[]>;
   /** Configure HSTS (HTTP Strict Transport Security) */
@@ -184,11 +184,12 @@ function validateConfig(config: Partial<SecurityConfig>): void {
 }
 
 /**
- * Generates a nonce for CSP using Base64 encoding
- * Uses timestamp for better performance
+ * Generates a nonce for CSP using Web Crypto API
  */
 function generateNonce(): string {
-  return Buffer.from(Date.now() + Math.random().toString(36).slice(-6)).toString("base64");
+  const array = new Uint8Array(16);
+  crypto.getRandomValues(array);
+  return Buffer.from(array).toString("base64");
 }
 
 /**
@@ -244,7 +245,7 @@ function buildReportToString(reports: ReportToConfig[]): string {
  * Creates an Elysia middleware that adds security headers to all responses
  * Optimized for performance with minimal object spread operations
  */
-export function elysiaHelmet(config: Partial<SecurityConfig> = {}): Elysia {
+export function elysiaHelmet(config: Partial<SecurityConfig> = {}) {
   // Validate configuration only once during initialization
   validateConfig(config);
 
@@ -294,35 +295,47 @@ export function elysiaHelmet(config: Partial<SecurityConfig> = {}): Elysia {
     Object.assign(staticHeaders, finalConfig.customHeaders);
   }
 
+  // Pre-compute CSP if nonce is NOT used
+  if (finalConfig.csp && !finalConfig.csp.useNonce) {
+    const headerName = finalConfig.csp.reportOnly ? "Content-Security-Policy-Report-Only" : "Content-Security-Policy";
+    staticHeaders[headerName] = buildCSPString(finalConfig.csp);
+  }
+
+  if (finalConfig.permissionsPolicy) {
+    staticHeaders["Permissions-Policy"] = buildPermissionsPolicyString(finalConfig.permissionsPolicy);
+  }
+
   const isProduction = process.env.NODE_ENV === "production";
 
   const hstsHeader =
     isProduction && finalConfig.hsts
-      ? `max-age=${finalConfig.hsts.maxAge}${
-          finalConfig.hsts.includeSubDomains ? "; includeSubDomains" : ""
-        }${finalConfig.hsts.preload ? "; preload" : ""}`
+      ? `max-age=${finalConfig.hsts.maxAge}${finalConfig.hsts.includeSubDomains ? "; includeSubDomains" : ""
+      }${finalConfig.hsts.preload ? "; preload" : ""}`
       : null;
 
-  return new Elysia().derive({ as: "global" }, ({ set }) => {
-    set.headers = { ...staticHeaders };
+  if (hstsHeader) {
+    staticHeaders["Strict-Transport-Security"] = hstsHeader;
+  }
 
-    if (finalConfig.csp) {
-      const nonce = finalConfig.csp.useNonce ? generateNonce() : undefined;
+  return new Elysia({
+    name: "elysia-helmet",
+  }).derive({ as: "global" }, ({ set }) => {
+    set.headers = {
+      ...set.headers,
+      ...staticHeaders
+    };
+
+    // Only process dynamic CSP if nonce IS used
+    if (finalConfig.csp && finalConfig.csp.useNonce) {
+      const nonce = generateNonce();
       const headerName = finalConfig.csp.reportOnly ? "Content-Security-Policy-Report-Only" : "Content-Security-Policy";
 
       set.headers[headerName] = buildCSPString(finalConfig.csp, nonce);
+      set.headers["X-Nonce"] = nonce;
 
-      if (nonce) {
-        set.headers["X-Nonce"] = nonce;
-      }
+      return { nonce };
     }
 
-    if (finalConfig.permissionsPolicy) {
-      set.headers["Permissions-Policy"] = buildPermissionsPolicyString(finalConfig.permissionsPolicy);
-    }
-
-    if (hstsHeader) {
-      set.headers["Strict-Transport-Security"] = hstsHeader;
-    }
+    return { nonce: undefined };
   });
 }

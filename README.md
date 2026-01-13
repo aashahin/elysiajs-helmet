@@ -71,6 +71,28 @@ const app = new Elysia()
   .listen(3000);
 ```
 
+## Nonce Usage
+
+You can access the generated nonce (when `useNonce` is enabled) via the `ctx.nonce` property in your handlers. This is useful for passing the nonce to your templates.
+
+```typescript
+const app = new Elysia()
+  .use(
+    elysiaHelmet({
+      csp: {
+        useNonce: true,
+        scriptSrc: [permission.SELF, permission.UNSAFE_INLINE], // Nonce will be automatically added to this list
+      },
+    })
+  )
+  .get("/", ({ nonce }) => `
+    <script nonce="${nonce}">
+      console.log('This script is secure!');
+    </script>
+  `)
+  .listen(3000);
+```
+
 ## Types Usage
 
 ```typescript
