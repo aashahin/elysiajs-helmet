@@ -317,11 +317,9 @@ export function elysiaHelmet(config: Partial<SecurityConfig> = {}) {
     staticHeaders["Strict-Transport-Security"] = hstsHeader;
   }
 
-  return new Elysia({
-    name: "elysia-helmet",
-  }).derive({ as: "global" }, ({ set }) => {
+  return new Elysia({ name: "elysia-helmet" }).derive({ as: "global" }, ({ set }) => {
     set.headers = {
-      ...set.headers,
+      ...(set.headers ?? {}),
       ...staticHeaders
     };
 
