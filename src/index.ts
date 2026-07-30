@@ -318,10 +318,7 @@ export function elysiaHelmet(config: Partial<SecurityConfig> = {}) {
   }
 
   return new Elysia({ name: "elysia-helmet" }).derive({ as: "global" }, ({ set }) => {
-    set.headers = {
-      ...(set.headers ?? {}),
-      ...staticHeaders
-    };
+    set.headers = { ...set.headers, ...staticHeaders };
 
     // Only process dynamic CSP if nonce IS used
     if (finalConfig.csp && finalConfig.csp.useNonce) {
